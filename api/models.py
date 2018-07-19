@@ -235,6 +235,7 @@ class Mission(models.Model):
 
 class Launch(models.Model):
     id = models.IntegerField(primary_key=True, editable=True)
+    is_next = models.BooleanField(default=False)
     name = models.CharField(max_length=255, blank=True)
     img_url = models.CharField(max_length=255, blank=True, null=True)
     status = models.IntegerField(blank=True, null=True)

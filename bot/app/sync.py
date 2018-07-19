@@ -65,11 +65,7 @@ class LaunchLibrarySync:
                     diff = int((launch_time - current_time).total_seconds())
                     logger.info('%s in %s hours' % (launch.name, (diff / 60) / 60))
                     self.check_next_stamp_changed(diff, launch)
-        self.check_instagram_profile()
-
-    def check_instagram_profile(self):
-        launch = Launch.objects.filter(net__gte=datetime.now()).order_by('net').first()
-        self.instagram.update_profile(launch.name)
+        self.instagram.check_instagram()
 
     def netstamp_changed(self, launch, notification, diff):
         logger.info('Netstamp change detected for %s - now launching in %d seconds.' % (launch.name, diff))
@@ -144,6 +140,7 @@ class LaunchLibrarySync:
                 notification.wasNotifiedOneHourTwitter = True
                 notification.save()
                 self.send_to_twitter(message, notification)
+                self.instagram.create_post(launch)
             elif 600 >= diff > 0 and (time_since_twitter >= 600) and notification.wasNotifiedTenMinutesTwitter is False:
                 message = get_message(launch, diff)
                 logger.info(message)

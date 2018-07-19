@@ -7,8 +7,10 @@ import io
 import textwrap
 
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageFilter
+from datetime import datetime
 from instagram_private_api import Client, ClientCompatPatch, ClientLoginError, ClientCookieExpiredError
 
+from api.models import Launch
 from bot.utils.util import custom_strftime, drop_shadow
 from spacelaunchnow import config
 
@@ -89,6 +91,24 @@ class InstagramBot:
                                     gender='3',
                                     email=config.INSTAGRAM_EMAIL,
                                     phone_number='')
+
+    def check_instagram(self):
+        launch = Launch.objects.filter(net__gte=datetime.now()).order_by('net').first()
+        if not launch.is_next:
+            old_next = Launch.objects.filter(is_next=True).all()
+            for old_launch in old_next:
+                old_launch.is_next = False
+                old_launch.save()
+            launch.is_next = True
+            launch.save()
+            self.set_instagram(launch)
+
+    def set_instagram(self, launch):
+        message = u"""🚀: %s\n📋: %s\n📍: %s\n📅: %s""" % (launch.name, launch.mission.type_name,
+                                                           launch.pad.location.name,
+                                                           custom_strftime("%B {S} at %I:%M %p %Z", launch.net))
+        message = (message[:150]) if len(message) > 150 else message
+        self.update_profile(message, launch.get_full_absolute_url())
 
     def create_post(self, launch, time_remaining='one hour'):
         MAX_W = 1080
