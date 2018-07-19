@@ -5,6 +5,7 @@ import json
 import urllib
 import io
 import textwrap
+import logging
 
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageFilter
 from datetime import datetime
@@ -18,6 +19,8 @@ settings_file = 'instagram.cache'
 
 username = config.INSTAGRAM_USERNAME
 password = config.INSTAGRAM_PASSWORD
+
+logger = logging.getLogger('bot.notifications')
 
 
 def to_json(python_object):
@@ -63,7 +66,7 @@ class InstagramBot:
                     guid=uuid, device_id=device_id, )
 
             except ClientLoginError:
-                print('Login Error. Please check your username and password.')
+                logger.error('INSTAGRAM - Login Error. Please check your username and password.')
 
             # stuff that you should cache
             cached_auth = self.instagram.settings
@@ -82,9 +85,10 @@ class InstagramBot:
                     settings=cached_auth)
 
             except ClientCookieExpiredError:
-                print('Cookie Expired. Please discard cached auth and login again.')
+                logger.error('INSTAGRAM - Cookie Expired. Please discard cached auth and login again.')
 
     def update_profile(self, message, url='https://spacelaunchnow.me'):
+        logger.info('INSTAGRAM - Updating profile to: %s' % message)
         self.instagram.edit_profile(external_url=url,
                                     first_name='Space Launch Now',
                                     biography=message,
@@ -94,9 +98,11 @@ class InstagramBot:
 
     def check_instagram(self):
         launch = Launch.objects.filter(net__gte=datetime.now()).order_by('net').first()
+        logger.debug('INSTAGRAM - Checking next launch - %s - next = %s' % (launch.name, launch.is_next))
         if not launch.is_next:
             old_next = Launch.objects.filter(is_next=True).all()
             for old_launch in old_next:
+                logger.debug('INSTAGRAM - Removing next launch - %s - next = %s' % (old_launch.name, old_launch.is_next))
                 old_launch.is_next = False
                 old_launch.save()
             launch.is_next = True
@@ -104,6 +110,7 @@ class InstagramBot:
             self.set_instagram(launch)
 
     def set_instagram(self, launch):
+        logger.debug('INSTAGRAM - Building profile message profile for launch: %s' % launch.name)
         message = u"""🚀: %s\n📋: %s\n📍: %s\n📅: %s""" % (launch.name, launch.mission.type_name,
                                                            launch.pad.location.name,
                                                            custom_strftime("%B {S} at %I:%M %p %Z", launch.net))
