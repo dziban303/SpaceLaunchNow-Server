@@ -6,14 +6,13 @@ import datetime as dtime
 import pytz
 from twitter import Twitter, OAuth, TwitterHTTPError
 
-from api.models import Launch
+from api.models import Launch, UpNext
 from bot.app.instagram import InstagramBot
 from bot.app.repository.launches_repository import LaunchRepository
-from bot.libraries.launchlibrarysdk import LaunchLibrarySDK
 from bot.libraries.onesignalsdk import OneSignalSdk
+from bot.tasks import set_instagram
 from bot.utils.config import keys
 from bot.models import Notification
-from bot.utils.deserializer import launch_json_to_model
 from bot.utils.util import seconds_to_time, get_fcm_topics_and_onesignal_segments
 from pyfcm import FCMNotification
 import logging
@@ -65,7 +64,20 @@ class LaunchLibrarySync:
                     diff = int((launch_time - current_time).total_seconds())
                     logger.info('%s in %s hours' % (launch.name, (diff / 60) / 60))
                     self.check_next_stamp_changed(diff, launch)
-                    
+        self.check_up_next()
+
+    def check_up_next(self):
+        launch = Launch.objects.filter(net__gte=datetime.now()).order_by('net').first()
+        next = UpNext.load()
+        if next.launch is None:
+            next.launch = launch
+            next.save()
+        if next.launch.id != launch.id:
+            next.launch = launch
+            next.save()
+            set_instagram()
+        else:
+            print ''
 
     def netstamp_changed(self, launch, notification, diff):
         logger.info('Netstamp change detected for %s - now launching in %d seconds.' % (launch.name, diff))

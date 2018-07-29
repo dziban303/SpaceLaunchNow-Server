@@ -9,7 +9,7 @@ from celery.utils.log import get_task_logger
 
 from bot.app.instagram import InstagramBot
 from bot.app.repository.launches_repository import LaunchRepository
-from bot.app.sync import LaunchLibrarySync
+from bot.app.sync import *
 from bot.models import Notification
 from bot.utils.util import custom_strftime
 

@@ -3,9 +3,10 @@ from __future__ import unicode_literals
 
 import os
 
-from django.contrib.sites.models import Site
 from django.db.models.functions import datetime
 from django.db import models
+
+from api.utils.singelton import SingletonModel
 from custom_storages import LogoStorage, AgencyImageStorage, OrbiterImageStorage, LauncherImageStorage, \
     AgencyNationStorage, EventImageStorage
 
@@ -237,7 +238,6 @@ class Mission(models.Model):
 
 class Launch(models.Model):
     id = models.IntegerField(primary_key=True, editable=True)
-    is_next = models.BooleanField(default=False)
     name = models.CharField(max_length=255, blank=True)
     img_url = models.CharField(max_length=255, blank=True, null=True)
     status = models.IntegerField(blank=True, null=True)
@@ -316,3 +316,7 @@ class InfoURLs(models.Model):
     class Meta:
         verbose_name = 'Info URL'
         verbose_name_plural = 'Info URLs'
+
+
+class UpNext(SingletonModel):
+    launch = models.ForeignKey(Launch, on_delete=models.SET_NULL, blank=True, null=True)
