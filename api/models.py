@@ -208,6 +208,8 @@ class Pad(models.Model):
     info_url = models.URLField(blank=True, null=True)
     wiki_url = models.URLField(blank=True, null=True)
     map_url = models.URLField(blank=True, null=True)
+    latitude = models.CharField(blank=True, null=True, max_length=30)
+    longitude = models.CharField(blank=True, null=True, max_length=30)
     location = models.ForeignKey(Location, related_name='pad', blank=True, on_delete=models.CASCADE)
 
     def __unicode__(self):
@@ -264,6 +266,16 @@ class Launch(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
+    @property
+    def vidURLs(self):
+        id = VidURLs.objects.filter(launch_id=self.id).values_list('vid_url', flat=True)
+        return id
+
+    @property
+    def infoURLs(self):
+        id = InfoURLs.objects.filter(launch_id=self.id).values_list('info_url', flat=True)
+        return id
+
     def __unicode__(self):
         return self.name
 
@@ -275,7 +287,7 @@ class Launch(models.Model):
         return self.slug
 
     def get_full_absolute_url(self):
-        return 'https://spacelaunchnow.me/%s' % (self.get_absolute_url())
+        return 'https://spacelaunchnow.me/launch/%s' % (self.get_absolute_url())
 
     class Meta:
         verbose_name = 'Launch'

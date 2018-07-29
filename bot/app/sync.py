@@ -65,7 +65,7 @@ class LaunchLibrarySync:
                     diff = int((launch_time - current_time).total_seconds())
                     logger.info('%s in %s hours' % (launch.name, (diff / 60) / 60))
                     self.check_next_stamp_changed(diff, launch)
-        self.instagram.check_instagram()
+                    
 
     def netstamp_changed(self, launch, notification, diff):
         logger.info('Netstamp change detected for %s - now launching in %d seconds.' % (launch.name, diff))
